@@ -1,0 +1,41 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!define ICONURL https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/v2.4.0
+!define DEVICONS https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons
+!define CLOUDOGUURL https://raw.githubusercontent.com/cloudogu/plantuml-cloudogu-sprites/master
+
+!includeurl ICONURL/devicons/nodejs.puml
+!include DEVICONS/mysql.puml
+!includeurl CLOUDOGUURL/tools/prometheus.puml
+!includeurl CLOUDOGUURL/tools/grafana.puml
+
+AddRelTag("async", $lineStyle = DashedLine())
+
+title "Diagrama de Conteineres do Sistema de Processamento de Pedidos"
+
+SHOW_PERSON_PORTRAIT()
+LAYOUT_LEFT_RIGHT()
+
+
+Person(superadmin,"Administrador da Gateway","Acompanha as métricas de transações de pedidos")
+System(client,"Micro Service Payment Process","Sistema que realiza o processamento do pagamento")
+
+System_Boundary(gateway, "Order Gateway"){
+
+    Container(backend,"Backend","Typescript","Sistema que recebe a solicitação do fechamento de pedido", $sprite = "nodejs")
+    Container(processor,"Processador dos pedidos","Lambda, Typescript","Processa os pedidos direcionando em seus respectivos fluxos",$sprite = "nodejs")
+    ContainerDb(db_backend,"Banco de dados","MySQL","Armazena os pedidos relacionados a uma transação",$sprite = "mysql")
+    Container(grafana,"Dashboard de métricas","Grafana","Exibe métricas de pedidos", $sprite = "grafana")
+    Container(prometheus,"Métricas de pedidos","Prometheus","Armazena métricas de pedidos", $sprite = "prometheus")
+
+    Rel(prometheus,processor,"Consume métricas de pedido em","HTTP/TXT")
+    Rel(grafana,prometheus,"Consume métricas de pedido em","PromQL")
+    Rel(superadmin,grafana,"Consume métricas de pedido em","HTTPS")
+    
+    Rel(client,backend,"Envia informações do pagamento para o fechamento do pedido em","HTTPS/JSON")
+    Rel(backend,db_backend,"Recebe dados do pedido","MySQL Protocol")
+    Rel(backend,processor,"Envia dados do pedido para","Através do Kafka pelo tópico orders",$tags = "async")
+    Rel(processor,backend,"Envia resultado da transação","Através do Kafka pelo tópico orders_result",$tags = "async")
+}
+
+@enduml

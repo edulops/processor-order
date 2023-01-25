@@ -1,0 +1,22 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+
+title "Diagrama de Contexto do Sistema de Processamento de Pedidos"
+
+SHOW_PERSON_PORTRAIT()
+LAYOUT_LEFT_RIGHT()
+
+Person(client,"Client","Usuário que ultiliza o plataforma")
+
+    System(frontweb, "Plataforma WEB", "Exibe o catálogo de produtos")
+
+    System(ms_payment, "Sistema de Pagamento", "Processa os pagamentos de uma trasação")
+    System(ms_order, "Sistema de Pedidos", "Realiza o gerenciamento dos pedidos")
+
+    Rel(client, frontweb, "Acessa o catálogo de produtos")
+    
+    Rel(frontweb,ms_payment,"Envia dados da venda")
+    Rel(ms_payment,ms_order,"Envia dados da transação")
+    Rel(ms_order,frontweb,"Envia resultado da transação")
+@enduml
